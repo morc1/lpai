@@ -1,17 +1,42 @@
 import { useState } from 'react';
-import { examples, type LPExample } from './data/examples';
+import { examples } from './data/examples';
+import { solveSimplex, type LPProblem, type LPSolution } from './solver/simplex';
+import type { LPExample } from './data/examples';
 import './App.css';
 
 function App() {
   const [selectedExample, setSelectedExample] = useState<LPExample | null>(null);
-  const [userProblem, setUserProblem] = useState('');
+  const [solution, setSolution] = useState<LPSolution | null>(null);
+  const [solving, setSolving] = useState(false);
   const [showTheory, setShowTheory] = useState(false);
+  const [userProblem, setUserProblem] = useState('');
+
+  const handleSolve = (problem: LPProblem) => {
+    setSolving(true);
+    setSolution(null);
+    // Small delay to show animation
+    setTimeout(() => {
+      const result = solveSimplex(problem);
+      setSolution(result);
+      setSolving(false);
+    }, 300);
+  };
+
+  const handleSelectExample = (example: LPExample) => {
+    if (selectedExample?.id === example.id) {
+      setSelectedExample(null);
+      setSolution(null);
+    } else {
+      setSelectedExample(example);
+      setSolution(null);
+    }
+  };
 
   return (
     <div className="app">
       <header className="header">
         <h1>Lineær Programmering</h1>
-        <p className="subtitle">Optimer med matematisk modellering</p>
+        <p className="subtitle">Interaktiv solver med klassiske eksempler</p>
       </header>
 
       <nav className="tabs">
@@ -45,12 +70,12 @@ function App() {
             <h2>Struktur</h2>
             <div className="formula-box">
               <div className="formula-label">Målfunktion</div>
-              <code>Maximer/Minimer: c1x1 + c2x2 + ... + cₙxₙ</code>
+              <code>Maximer/Minimer: c1*x1 + c2*x2 + ... + cn*xn</code>
             </div>
             <div className="formula-box">
               <div className="formula-label">Begrænsninger</div>
-              <code>a1x1 + a2x2 + ... + aₙxₙ ≤ b (eller ≥, =)</code>
-              <code>x1, x2, ..., xₙ ≥ 0</code>
+              <code>a1*x1 + a2*x2 + ... + an*xn &lt;= b (eller &gt;=, =)</code>
+              <code>x1, x2, ..., xn &gt;= 0</code>
             </div>
           </section>
 
@@ -96,18 +121,14 @@ function App() {
             <textarea
               value={userProblem}
               onChange={(e) => setUserProblem(e.target.value)}
-              placeholder="Beskriv dit problem i daglig tale...
-
-For eksempel:
-Jeg har 1000 kr til at købe ind. Frugt koster 20 kr/kg og grøntsager koster 15 kr/kg. Jeg vil købe mindst 20 kg i alt, og jeg vil have mindst 10 kg frugt."
+              placeholder="Beskriv dit problem i daglig tale..."
             />
             {userProblem.length > 50 && (
               <div className="ai-hint">
                 <span className="hint-icon">💡</span>
                 <p>
-                  AI kunne her identificere variable (frugt, grøntsager), 
-                  begrænsninger (budget, minimum total, minimum frugt) 
-                  og foreslå målfunktion (maksimer mængde eller minimer pris).
+                  AI kunne her identificere variable, begrænsninger og målfunktion.
+                  Dette er en kommende feature!
                 </p>
               </div>
             )}
@@ -115,14 +136,15 @@ Jeg har 1000 kr til at købe ind. Frugt koster 20 kr/kg og grøntsager koster 15
 
           <section className="examples-section">
             <h2>Klassiske eksempler</h2>
+            <p className="examples-hint">
+              Klik på et eksempel for at se problemet, og tryk "Løs" for at køre simplex-algoritmen.
+            </p>
             <div className="examples-grid">
               {examples.map((example) => (
                 <button
                   key={example.id}
                   className={`example-card ${selectedExample?.id === example.id ? 'selected' : ''}`}
-                  onClick={() => setSelectedExample(
-                    selectedExample?.id === example.id ? null : example
-                  )}
+                  onClick={() => handleSelectExample(example)}
                 >
                   <h3>{example.title}</h3>
                   <p>{example.description.split('.')[0]}.</p>
@@ -164,46 +186,57 @@ Jeg har 1000 kr til at købe ind. Frugt koster 20 kr/kg og grøntsager koster 15
                 <div className="detail-card objective">
                   <h4>Målfunktion</h4>
                   {selectedExample.objective.maximize && (
-                    <p className="direction maximize">
-                      {selectedExample.objective.maximize}
-                    </p>
+                    <p className="direction maximize">{selectedExample.objective.maximize}</p>
                   )}
                   {selectedExample.objective.minimize && (
-                    <p className="direction minimize">
-                      {selectedExample.objective.minimize}
-                    </p>
+                    <p className="direction minimize">{selectedExample.objective.minimize}</p>
                   )}
                   <code className="formal">{selectedExample.objective.formal}</code>
                 </div>
 
-                <div className="detail-card solution">
-                  <h4>Løsning</h4>
-                  {selectedExample.solve ? (
-                    <>
-                      <ul className="solution-vars">
-                        {Object.entries(selectedExample.solve().variables).map(
-                          ([key, val]) => (
-                      <li key={key}>
-                        <span className="var-name">{key}</span>
-                        <span className="var-value">
-                          = {val.toFixed(1)} {selectedExample.variables.find(v => v.name === key)?.unit}
-                        </span>
-                      </li>
-                          )
-                        )}
-                      </ul>
-                      <div className="solution-obj">
-                        {selectedExample.objective.maximize && (
-                          <span>Maksimeret {selectedExample.objective.maximize.toLowerCase()}: </span>
-                        )}
-                        {selectedExample.objective.minimize && (
-                          <span>Minimeret {selectedExample.objective.minimize.toLowerCase()}: </span>
-                        )}
-                        <strong>{selectedExample.solve().objective.toLocaleString()}</strong>
-                      </div>
-                    </>
-                  ) : (
-                    <p className="no-solve">Løsning ikke tilgængelig</p>
+                <div className="detail-card solver">
+                  <h4>Simplex Solver</h4>
+                  <button
+                    className="solve-button"
+                    onClick={() => handleSolve(selectedExample.problem)}
+                    disabled={solving}
+                  >
+                    {solving ? 'Løser...' : 'Løs problemet'}
+                  </button>
+
+                  {solution && (
+                    <div className="solution-result">
+                      {solution.feasible ? (
+                        <>
+                          <div className="solution-status success">
+                            {solution.message}
+                          </div>
+                          <ul className="solution-vars">
+                            {solution.variables.map((val, idx) => (
+                              <li key={idx}>
+                                <span className="var-name">{selectedExample.variables[idx]?.name || `x${idx + 1}`}</span>
+                                <span className="var-value">
+                                  = {val.toFixed(2)} {selectedExample.variables[idx]?.unit || ''}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                          <div className="solution-obj">
+                            {selectedExample.objective.maximize && (
+                              <span>Maksimeret værdi: </span>
+                            )}
+                            {selectedExample.objective.minimize && (
+                              <span>Minimeret værdi: </span>
+                            )}
+                            <strong>{solution.objective.toFixed(2)}</strong>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="solution-status error">
+                          {solution.message}
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>

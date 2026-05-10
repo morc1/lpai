@@ -10,14 +10,19 @@
   --text-muted: #6b6560;
   --accent: #2563eb;
   --accent-bg: #eff6ff;
+  --success: #059669;
+  --success-bg: #ecfdf5;
+  --error: #dc2626;
+  --error-bg: #fef2f2;
 }
 
 body {
   margin: 0;
-  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   background: var(--bg);
   color: var(--text);
   line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
 }
 
 .app {
@@ -41,6 +46,7 @@ body {
 .subtitle {
   color: var(--text-muted);
   margin: 4px 0 0;
+  font-size: 1rem;
 }
 
 .tabs {
@@ -86,7 +92,7 @@ body {
 
 .problem-formulator textarea {
   width: 100%;
-  min-height: 140px;
+  min-height: 120px;
   padding: 12px;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -123,7 +129,13 @@ body {
 
 .examples-section h2 {
   font-size: 1.1rem;
-  margin: 0 0 12px;
+  margin: 0 0 8px;
+}
+
+.examples-hint {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin: 0 0 16px;
 }
 
 .examples-grid {
@@ -140,20 +152,25 @@ body {
   text-align: left;
   cursor: pointer;
   transition: all 0.2s;
+  border: none;
+  font-family: inherit;
 }
 
 .example-card:hover {
   border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
 }
 
 .example-card.selected {
   border-color: var(--accent);
   box-shadow: 0 0 0 2px var(--accent-bg);
+  background: var(--accent-bg);
 }
 
 .example-card h3 {
   margin: 0 0 6px;
   font-size: 1rem;
+  color: var(--text);
 }
 
 .example-card p {
@@ -217,7 +234,7 @@ body {
 }
 
 .var-name {
-  font-family: 'Consolas', monospace;
+  font-family: 'Consolas', 'Monaco', monospace;
   font-weight: 600;
   color: var(--accent);
 }
@@ -237,7 +254,7 @@ body {
 }
 
 .formal {
-  font-family: 'Consolas', monospace;
+  font-family: 'Consolas', 'Monaco', monospace;
   font-size: 0.9rem;
   color: var(--text-muted);
 }
@@ -248,7 +265,7 @@ body {
 }
 
 .direction.maximize {
-  color: #059669;
+  color: var(--success);
 }
 
 .direction.minimize {
@@ -261,13 +278,63 @@ body {
   color: var(--text);
 }
 
+.solver {
+  border: 2px solid var(--accent);
+}
+
+.solve-button {
+  display: block;
+  width: 100%;
+  padding: 12px 24px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.solve-button:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.solve-button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.solution-result {
+  margin-top: 16px;
+}
+
+.solution-status {
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  margin-bottom: 12px;
+}
+
+.solution-status.success {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.solution-status.error {
+  background: var(--error-bg);
+  color: var(--error);
+}
+
 .solution-vars li {
   justify-content: flex-start;
   gap: 8px;
 }
 
 .var-value {
-  font-family: 'Consolas', monospace;
+  font-family: 'Consolas', 'Monaco', monospace;
+  color: var(--text);
 }
 
 .solution-obj {
@@ -332,6 +399,6 @@ body {
 
 .formula-box code {
   display: block;
-  font-family: 'Consolas', monospace;
+  font-family: 'Consolas', 'Monaco', monospace;
   font-size: 0.95rem;
 }
